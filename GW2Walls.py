@@ -1,13 +1,24 @@
 from urllib import request
 from bs4 import BeautifulSoup
 from pprint import PrettyPrinter
-import os
-import string
+from os import path, mkdir
+from string import ascii_letters, digits
 
 pp = PrettyPrinter(indent=2)
 
 
 class GW2Walls:
+    """
+    This object searches the Guild Wars 2 website for wallpapers and adds them to a massive list of dictionary. You
+    can then call the download_walls method to have it download all of the wallpapers for a specified resolution to a
+    specified location.
+
+    Script should automagically pick up new wallpapers (provided ArenaNet doesn't change the page design on any of
+    the pages).
+
+    Requires BeautifulSoup4.
+    """
+
     # Set the URLs for the Media and Releases pages.
     media_url = 'https://www.guildwars2.com/en/media/wallpapers/'
     releases_url = 'https://www.guildwars2.com/en/the-game/releases/'
@@ -97,17 +108,27 @@ class GW2Walls:
         return wall_list
 
     def download_walls(self, save_path, dim, name=None):
-        save_path = os.path.expanduser(save_path)
-        save_path = os.path.expandvars(save_path)
-        if not os.path.exists(save_path):
+        """
+        Downloads wallpapers to save_path that match the resolution given in dim. If name is specified, just gets the
+        wallpaper for that release, that resolution.
+
+        :param save_path: string - The path to save the wallpapers to. Path can contain environment variables and ~.
+        :param dim: string - The resolution given as "AxB", where A and B are numbers.
+        :param name: string - (optional) The name of the release to get wallpapers for. Example: "The Dragon's Reach
+        Part 2"
+        :return: None (Downloads wallpapers)
+        """
+        save_path = path.expanduser(save_path)
+        save_path = path.expandvars(save_path)
+        if not path.exists(save_path):
             try:
-                os.mkdir(save_path)
+                mkdir(save_path)
             except OSError as e:
                 print(e)
         items = self.collect_download_urls(dim, name=name)
         print('\nDownloading wallpapers to {}'.format(save_path))
         for idx, item in enumerate(items):
-            save_file = os.path.join(save_path, item['url'].split('/')[-1])
+            save_file = path.join(save_path, item['url'].split('/')[-1])
             try:
                 print('({:>3}/{:>3}) {} <-- {}'.format(idx + 1, len(items), save_file, item['url']))
                 with open(save_file, mode='wb') as f:
@@ -117,18 +138,33 @@ class GW2Walls:
 
     @property
     def dimensions(self):
+        """
+        Returns the list of dimensions in self.walls.
+
+        :return: set - The set of all dimension strings in the collection.
+        """
         return set(dic['dim'] for dic in self.walls)
 
     @property
     def names(self):
+        """
+        Returns the list of names in self.walls.
+
+        :return: set - The set of all release names in the collection.
+        """
         return set(dic['name'] for dic in self.walls)
 
     @staticmethod
     def __filename(in_file):
-        valid_chars = '-_.() {}{}'.format(string.ascii_letters, string.digits)
+        """
+        Returns a filename-friendly version of the release name.
+        :param in_file: string - Name of the release.
+        :return: string - Filename-friendly version of the name of the release.
+        """
+        valid_chars = '-_.() {}{}'.format(ascii_letters, digits)
         return ''.join(c for c in in_file if c in valid_chars)
 
 if __name__ == '__main__':
     app = GW2Walls()
-    # Print some properties.
     app.download_walls('%userprofile%\\Desktop\\GW2 Walls', '1680x1050')
+    # TODO: Add argparse front-end here.
