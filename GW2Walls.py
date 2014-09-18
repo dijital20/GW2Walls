@@ -2,10 +2,13 @@ from urllib import request
 from pprint import PrettyPrinter
 from os import path, mkdir
 from string import ascii_letters, digits
+<<<<<<< HEAD
 from datetime import datetime
 
 from bs4 import BeautifulSoup
 
+=======
+>>>>>>> origin/master
 
 pp = PrettyPrinter(indent=2)
 
@@ -123,7 +126,11 @@ class GW2Walls:
                     wall_list.append(item)
         return wall_list
 
+<<<<<<< HEAD
     def download_walls(self, save_path, dim, name=None, use_info=False, type=None):
+=======
+    def download_walls(self, save_path, dim, name=None):
+>>>>>>> origin/master
         """
         Downloads wallpapers to save_path that match the resolution given in dim. If name is specified, just gets the
         wallpaper for that release, that resolution.
@@ -144,10 +151,14 @@ class GW2Walls:
         items = self.collect_download_urls(dim, name=name, type=type)
         print('\nDownloading wallpapers to {}'.format(save_path))
         for idx, item in enumerate(items):
+<<<<<<< HEAD
             if use_info:
                 save_file = path.join(save_path, '{date} {name} {dim}.jpg'.format(**item))
             else:
                 save_file = path.join(save_path, item['url'].split('/')[-1])
+=======
+            save_file = path.join(save_path, item['url'].split('/')[-1])
+>>>>>>> origin/master
             try:
                 print('({:>3}/{:>3}) {} <-- {}'.format(idx + 1, len(items), save_file, item['url']))
                 with open(save_file, mode='wb') as f:
@@ -204,6 +215,11 @@ class GW2Walls:
 
 if __name__ == '__main__':
     app = GW2Walls()
+<<<<<<< HEAD
     # app.download_walls('%userprofile%\\Desktop\\GW2 Walls', '1680x1050')
     app.download_walls('~/Desktop/GW2', '1920x1200', use_info=True)
     # TODO: Add argparse front-end here.
+=======
+    app.download_walls('%userprofile%\\Desktop\\GW2 Walls', '1680x1050')
+    # TODO: Add argparse front-end here.
+>>>>>>> origin/master
