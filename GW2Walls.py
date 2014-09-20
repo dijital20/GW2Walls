@@ -1,12 +1,10 @@
 from urllib import request
-from pprint import PrettyPrinter
 from os import path, mkdir
 from string import ascii_letters, digits
 from datetime import datetime
+import argparse
 
 from bs4 import BeautifulSoup
-
-pp = PrettyPrinter(indent=2)
 
 
 class GW2Walls:
@@ -26,13 +24,14 @@ class GW2Walls:
     releases_url = 'https://www.guildwars2.com/en/the-game/releases/'
     main_site_url = 'https://www.guildwars2.com'
 
-    def __init__(self):
+    def __init__(self, verbose=False):
         """
         Initializes the object for use.
 
         :return: None
         """
         self.walls = list()
+        self.verbose = verbose
         self.get_media_walls()
         self.get_release_walls()
 
@@ -50,7 +49,8 @@ class GW2Walls:
             for wall_size_item in wall_item.find_all('a'):
                 if not wall_size_item['href'].startswith('https:'):
                     wall_size_item['href'] = 'https:{}'.format(wall_size_item['href'])
-                print('...Adding {} {} ({})'.format(wall_name, wall_size_item.text, wall_size_item['href']))
+                if self.verbose: print('...Adding {} {} ({})'.format(wall_name, wall_size_item.text, wall_size_item[
+                    'href']))
                 self.walls.append(
                     {'name': wall_name, 'dim': wall_size_item.text, 'url': wall_size_item['href'], 'type': 'media',
                      'date': ''})
@@ -79,13 +79,14 @@ class GW2Walls:
         release_soup = BeautifulSoup(release_html)
         wall_name = self.__filename(release_soup.title.text.replace(' | GuildWars2.com', ''))
         wall_date = self.__get_release_date(release_url)
-        print('\nGetting {} ({}) walls...'.format(wall_name, wall_date))
+        if self.verbose: print('\nGetting {} ({}) walls...'.format(wall_name, wall_date))
         for keyword in ['wallpaper', 'resolutions']:
             for wall_item in release_soup.find_all('ul', keyword):
                 for wall_size_item in wall_item.find_all('a'):
                     if not wall_size_item['href'].startswith('https:'):
                         wall_size_item['href'] = 'https:{}'.format(wall_size_item['href'])
-                    print('...Adding {} {} ({})'.format(wall_name, wall_size_item.text, wall_size_item['href']))
+                    if self.verbose: print('...Adding {} {} ({})'.format(wall_name, wall_size_item.text, \
+                            wall_size_item['href']))
                     self.walls.append({'name': wall_name, 'dim': wall_size_item.text, 'url': wall_size_item['href'],
                                        'type': 'release', 'date':wall_date})
 
@@ -99,14 +100,14 @@ class GW2Walls:
         """
         wall_list = list()
         if dim not in self.dimensions:
-            raise ValueError('Incorrect dimension specified ({}).\nPlease specify one of the following:\n{}'.format(
-                dim, pp.pprint(self.dimensions)))
+            raise ValueError('Incorrect dimension specified ({}).\n\nPlease specify one of the following:\n{}'.format(
+                dim, self.dimensions))
         if name and name not in self.names:
-            raise ValueError('Incorrect release name specified ({}).\nPlease specify one of the following:\n{'
-                             '}'.format(name, pp.pprint(self.names)))
+            raise ValueError('Incorrect release name specified ({}).\n\nPlease specify one of the following:\n{'
+                             '}'.format(name, self.names))
         if type and type not in self.types:
-            raise ValueError('Incorrect type specified ({}).\nPlease specify one of the following:\n{}'.format(type,
-                                                                                                               pp.pprint(self.types)))
+            raise ValueError('Incorrect type specified ({}).\n\nPlease specify one of the following:\n{}'.format(type,
+                                                                                                               self.types))
         for item in self.walls:
             if name and type:
                 if item['name'] == name and item['type'] == type and item['dim'] == dim:
@@ -148,7 +149,8 @@ class GW2Walls:
             else:
                 save_file = path.join(save_path, item['url'].split('/')[-1])
             try:
-                print('({:>3}/{:>3}) {} <-- {}'.format(idx + 1, len(items), save_file, item['url']))
+                if self.verbose: print('({:>3}/{:>3}) {} <-- {}'.format(idx + 1, len(items), save_file, item['url']))
+                else: print('({:>3}/{:>3}) {}'.format(idx + 1, len(items), save_file))
                 with open(save_file, mode='wb') as f:
                     f.write(request.urlopen(item['url']).read())
             except (PermissionError, OSError) as e:
@@ -202,7 +204,20 @@ class GW2Walls:
         return ''
 
 if __name__ == '__main__':
-    app = GW2Walls()
-    # app.download_walls('%userprofile%\\Desktop\\GW2 Walls', '1680x1050')
-    app.download_walls('~/Desktop/GW2', '1920x1200', use_info=True)
-    # TODO: Add argparse front-end here.
+    parser = argparse.ArgumentParser(description='Find and download Guild Wars 2 wallpapers.')
+    parser.add_argument('-r', type=str, help='Release to download wallpapers for. Example: \'Escape from Lions '
+                                             'Arch\'',
+                        default='', metavar='release')
+    parser.add_argument('-t', type=str, help='Type of wallpapers to download wallpapers for. Example: \'release\'',
+                        default='', metavar='type')
+    parser.add_argument('-u', help='Use wallpaper information in the name rather than the original name.',
+                        action='store_true')
+    parser.add_argument('-v', help='Enable verbose output.', action='store_true')
+    parser.add_argument('resolution', type=str, help='Resolution to download wallpapers for.')
+    parser.add_argument('save_path', type=str, help='Path to save downloaded wallpapers to. This path can include '
+                                                    'environment variables and the tilde (~).')
+
+    values = parser.parse_args()
+
+    app = GW2Walls(values.v)
+    app.download_walls(values.save_path, values.resolution, name=values.r, type=values.t, use_info=values.u)
