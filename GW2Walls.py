@@ -96,7 +96,7 @@ class GW2Walls:
 
         :param dim: string - Contains the dimension we should return.
         :param name: string - Contains the release we should return.
-        :return: None
+        :return: list - Contains the list of URLs to download.
         """
         wall_list = list()
         if dim not in self.dimensions:
@@ -195,6 +195,13 @@ class GW2Walls:
 
     @staticmethod
     def __get_release_date(release_url):
+        """
+        Gets the release date from the URL if it exists. This is used for download filenames.
+        
+        :param release_url: string - URL of the release page.
+        :return: string - Release date.
+        
+        """
         date = release_url.split('/')[-2]
         for format in ['%B-%Y', '%B-%d-%Y']:
             try:
@@ -204,6 +211,7 @@ class GW2Walls:
         return ''
 
 if __name__ == '__main__':
+    # Setup argparse
     parser = argparse.ArgumentParser(description='Find and download Guild Wars 2 wallpapers.')
     parser.add_argument('-r', type=str, help='Release to download wallpapers for. Example: \'Escape from Lions '
                                              'Arch\'',
@@ -216,8 +224,9 @@ if __name__ == '__main__':
     parser.add_argument('resolution', type=str, help='Resolution to download wallpapers for.')
     parser.add_argument('save_path', type=str, help='Path to save downloaded wallpapers to. This path can include '
                                                     'environment variables and the tilde (~).')
-
+    
+    # Parse args
     values = parser.parse_args()
-
+     # Create the app and do the thing!
     app = GW2Walls(values.v)
     app.download_walls(values.save_path, values.resolution, name=values.r, type=values.t, use_info=values.u)
