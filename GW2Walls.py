@@ -1,12 +1,14 @@
+import argparse
+import csv
+
 try:
     from urllib.request import urlopen
 except ImportError:
     from urllib2 import urlopen
+
 from os import path, mkdir
 from string import ascii_letters, digits
 from datetime import datetime
-import argparse
-import csv
 
 from bs4 import BeautifulSoup
 
@@ -48,9 +50,9 @@ class GW2Walls:
 
         :return: None - appends to self.walls.
         """
-        print('\nGetting media walls')
+        print('\nGetting media walls\n{0}'.format(self.media_url))
         wallpaper_html = urlopen(self.media_url).read()
-        wallpaper_soup = BeautifulSoup(wallpaper_html)
+        wallpaper_soup = BeautifulSoup(wallpaper_html, 'html.parser')
         for wall_item in wallpaper_soup.find_all('li', 'wallpaper'):
             wall_name = wall_item.img['src'].split('/')[-1].replace(
                 '-crop.jpg', '')
@@ -78,13 +80,15 @@ class GW2Walls:
 
         :return: None - appends to self.walls.
         """
-        print('\nGetting release walls')
+        print('\nGetting release walls\n{0}'.format(self.releases_url))
         releases_html = urlopen(self.releases_url).read()
-        releases_soup = BeautifulSoup(releases_html)
+        releases_soup = BeautifulSoup(releases_html, 'html.parser')
         for canvas in releases_soup.find_all('section', 'release-canvas'):
             for release in canvas.find_all('li'):
-                self.get_specified_release_wall(
-                    self.main_site_url + release.a['href'])
+                release_url = release.a['href'] \
+                    if release.a['href'].startswith(self.main_site_url) \
+                    else '{0}{1}'.format(self.main_site_url, release.a['href'])
+                self.get_specified_release_wall(release_url)
 
     def get_specified_release_wall(self, release_url):
         """
@@ -93,8 +97,9 @@ class GW2Walls:
         :param release_url: string - the URL to the release page.
         :return: None - appends to self.walls.
         """
+        print('  Getting release: {0}'.format(release_url))
         release_html = urlopen(release_url).read()
-        release_soup = BeautifulSoup(release_html)
+        release_soup = BeautifulSoup(release_html, 'html.parser')
         wall_name = self.__filename(
             release_soup.title.text.replace(' | GuildWars2.com', ''))
         wall_number = 0
@@ -138,15 +143,15 @@ class GW2Walls:
         if name and name not in self.names:
             raise ValueError(
                 'Incorrect release name specified ({}).\n\nPlease specify one '
-                'of the following:\n{'
-                '}'.format(name, self.names))
+                'of the following:\n{}'.format(name, self.names))
         if wall_type and wall_type not in self.types:
             raise ValueError('Incorrect type specified ({}).\n\n'
                              'Please specify one of the following:\n{}'.format(
                                  wall_type, self.types))
         for item in self.walls:
             if name and wall_type:
-                if item['name'] == name and item['type'] == wall_type and item['dim'] == dim:
+                if item['name'] == name and item['type'] == wall_type \
+                        and item['dim'] == dim:
                     wall_list.append(item)
             elif name and not wall_type:
                 if item['name'] == name and item['dim'] == dim:
