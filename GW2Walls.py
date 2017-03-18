@@ -1,9 +1,9 @@
 import argparse
 import csv
 
-try:
+try:  # Python 3
     from urllib.request import urlopen
-except ImportError:
+except ImportError:  # Python 2
     from urllib2 import urlopen
 
 from os import path, mkdir
