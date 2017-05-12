@@ -13,7 +13,7 @@ from datetime import datetime
 from bs4 import BeautifulSoup
 
 
-class GW2Walls:
+class GW2Walls(object):
     """
     This object searches the Guild Wars 2 website for wallpapers and adds them
     to a massive list of dictionary. You can then call the download_walls method
