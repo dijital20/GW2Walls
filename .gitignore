@@ -102,3 +102,9 @@ $RECYCLE.BIN/
 *.msi
 *.msm
 *.msp
+
+# Pycharm
+.idea
+
+# Visual Studio Code
+.vscode
