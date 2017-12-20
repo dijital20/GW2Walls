@@ -8,20 +8,14 @@ import sys
 from contextlib import closing
 from threading import Thread
 
-try:
-    from queue import Queue, Empty
-except ImportError:
-    from Queue import Queue, Empty
-
 try:  # Python 3
     from urllib.request import urlopen
+    from urllib.parse import urlsplit
+    from queue import Queue, Empty
 except ImportError:  # Python 2
     from urllib2 import urlopen
-
-try:  # Python 3
-    from urllib.parse import urlsplit
-except ImportError:  # Python 2
     from urlparse import urlsplit
+    from Queue import Queue, Empty
 
 
 MEDIA_URL = 'https://www.guildwars2.com/en/media/wallpapers/'
@@ -238,7 +232,7 @@ def get_release_urls(section_title, release_name, release_date, url, resolution,
             )
             if link_text == resolution:
                 file_path = os.path.join(
-                    save_path, 
+                    save_path,
                     '{} {} {} {}'.format(
                         release_date,
                         section_title,
