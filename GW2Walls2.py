@@ -53,6 +53,7 @@ def cleanup_html(html):
     redundant_whitespace_pattern = r'\s{2,}'
     # Cleanup
     _log.debug('Input length: %d chars', len(html))
+    html = html.decode('UTF-8')
     html = re.sub(newline_pattern, ' ', html)
     html = re.sub(tab_pattern, ' ', html)
     html = re.sub(redundant_whitespace_pattern, '', html)
@@ -63,10 +64,12 @@ def cleanup_html(html):
 def cleanup_title(title_html):
     _log = logging.getLogger('GW2Walls2')
     # PATTERNS
+    newline_pattern = r'[\r\n]'
     tag_pattern = r'<[/]?\w+>'
     unfriendly_chars = r'[^\w\s\-]'
     # Cleanup
     _log.debug('Called with: %s', title_html)
+    title_html = re.sub(newline_pattern, '', title_html)
     title_html = re.sub(tag_pattern, '', title_html)
     title_html = re.sub(unfriendly_chars, '', title_html)
     _log.debug('Returning: %s', title_html)
@@ -108,15 +111,25 @@ def get_releases_urls(resolution, save_path, release_url=RELEASES_URL):
     _log.debug('Called with: %s', locals())
     with closing(urlopen(release_url)) as p:
         data = cleanup_html(p.read())
-    section_data = re.findall(RELEASE_SECTION_PATTERN, data, flags=re.IGNORECASE)
+    section_data = re.findall(
+        RELEASE_SECTION_PATTERN, data, flags=re.IGNORECASE
+    )
     for section in section_data:
-        section_title = re.findall(HEADER_4_PATTERN, section, flags=re.IGNORECASE)
+        section_title = re.findall(
+            HEADER_4_PATTERN, section, flags=re.IGNORECASE
+        )
         section_title = cleanup_title(section_title[0] if section_title else '')
         list_items = re.findall(LIST_PATTERN, section)
         for list_item in list_items:
-            release_name = re.findall(HEADER_5_PATTERN, list_item, flags=re.IGNORECASE)
-            release_name = cleanup_title(release_name[0] if release_name else '')
-            release_date = re.findall(DATETIME_PATTERN, list_item, flags=re.IGNORECASE)
+            release_name = re.findall(
+                HEADER_5_PATTERN, list_item, flags=re.IGNORECASE
+            )
+            release_name = cleanup_title(
+                release_name[0] if release_name else ''
+            )
+            release_date = re.findall(
+                DATETIME_PATTERN, list_item, flags=re.IGNORECASE
+            )
             release_date = release_date[0] if release_date else ''
             links = re.findall(LINK_PATTERN, list_item)
             _log.debug('Processing %d links', len(links))
@@ -133,7 +146,8 @@ def get_releases_urls(resolution, save_path, release_url=RELEASES_URL):
                 t.start()
 
 
-def get_release_urls(section_title, release_name, release_date, url, resolution, save_path):
+def get_release_urls(section_title, release_name, release_date, url, resolution,
+                     save_path):
     _log.debug('Called with: %s', locals())
     found = 0
     try:
@@ -147,7 +161,10 @@ def get_release_urls(section_title, release_name, release_date, url, resolution,
     for file_url, link_text in links:
         file_url = cleanup_url(file_url)
         try:
-            _log.debug('%s %s: %s <--> %s', section_title, release_name, repr(link_text), repr(resolution))
+            _log.debug(
+                '%s %s: %s <--> %s', section_title, release_name,
+                repr(link_text), repr(resolution)
+            )
             if link_text == resolution:
                 file_path = os.path.join(
                     save_path, 
@@ -163,7 +180,9 @@ def get_release_urls(section_title, release_name, release_date, url, resolution,
                 found += 1
         except ValueError:
             continue
-    _log.info('Found %d wallpapers in %s %s', found, section_title, release_name)
+    _log.info(
+        'Found %d wallpapers in %s %s', found, section_title, release_name
+    )
 
 
 # --- Download URLs -----------------------------------------------------------
@@ -178,10 +197,15 @@ def download_image():
                     os.makedirs(os.path.dirname(save_path))
                     _log.info('Created: %s', os.path.dirname(save_path))
                 except Exception as e:
-                    _log.warning('Failed to create: %s', os.path.dirname(save_path))
+                    _log.warning(
+                        'Failed to create: %s', os.path.dirname(save_path)
+                    )
             try:
                 if os.path.exists(save_path):
-                    _log.warning('WARNING: Overwriting file as it already exists:\n%s', save_path)
+                    _log.warning(
+                        'WARNING: Overwriting file as it already exists:\n%s',
+                        save_path
+                    )
                 with closing(urlopen(url)) as u:
                     with open(save_path, mode='wb') as f:
                         f.write(u.read())
