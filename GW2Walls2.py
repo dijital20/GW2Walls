@@ -1,3 +1,4 @@
+"""Find and download wallpapers for the game Guild Wars 2."""
 import argparse
 import logging
 import os
@@ -31,13 +32,23 @@ LIST_PATTERN = r'<li.*?>(.*?)</li>'
 HEADER_4_PATTERN = r'<h4.*?>(.*?)</h4>'
 HEADER_5_PATTERN = r'<h5.*?>(.*?)</h5>'
 DATETIME_PATTERN = r'<time.*?datetime="([\d\-]*)".*?>'
-RELEASE_SECTION_PATTERN = r'<section.*?class=".*?release-canvas.*?>(.*?)</section>'
+RELEASE_SECTION_PATTERN = \
+    r'<section.*?class=".*?release-canvas.*?>(.*?)</section>'
 
 _log = logging.getLogger('GW2Walls2')
-_queue = Queue()
 
 
 def fix_save_path(save_path):
+    """
+    Munge the save path, expanding user, environment vars, and returning an
+    absolute path.
+
+    Args:
+        save_path (str): Path to save to.
+
+    Returns (str):
+        Munged and corrected path.
+    """
     _log.debug('Called with: %s', save_path)
     save_path = os.path.expanduser(save_path)
     save_path = os.path.expandvars(save_path)
@@ -47,6 +58,17 @@ def fix_save_path(save_path):
 
 
 def cleanup_html(html):
+    """
+    Cleanup HTML that is returned from URL open, removing newlines, tabs,
+    and extra whitespace.
+
+    Args:
+        html (str, bytes): Byte array or string of the HTML content (will be
+            decoded to a string).
+
+    Returns (str):
+        Condensed HTML code. Enjoy!
+    """
     # PATTERNS
     newline_pattern = r'[\r\n]'
     tab_pattern = r'\t'
@@ -62,7 +84,16 @@ def cleanup_html(html):
 
 
 def cleanup_title(title_html):
-    _log = logging.getLogger('GW2Walls2')
+    """
+    Cleanup title strings, removing newlines, HTML tags,
+    and filename-unfriendly characters.
+
+    Args:
+        title_html (str): String to cleanup.
+
+    Returns (str):
+        Squeaky clean string.
+    """
     # PATTERNS
     newline_pattern = r'[\r\n]'
     tag_pattern = r'<[/]?\w+>'
@@ -77,6 +108,17 @@ def cleanup_title(title_html):
 
 
 def cleanup_url(url):
+    """
+    Cleanup a given URL, since ArenaNet's pages have weird things. Restores
+    servers to relative URLs, and adds https: on the links they are resumably
+    passing to javascript.
+
+    Args:
+        url (str): URL to cleanup.
+
+    Returns (str):
+        Cleaned up (hopefully valid) URL.
+    """
     if url.startswith('//'):
         url = 'https:{}'.format(url)
     elif url.startswith('/'):
@@ -85,7 +127,17 @@ def cleanup_url(url):
 
 
 # --- Gather URLs -------------------------------------------------------------
-def get_media_urls(resolution, save_path, media_url=MEDIA_URL):
+def get_media_urls(resolution, save_path, queue, media_url=MEDIA_URL):
+    """
+    Get Wallpaper URLs from the Media > Wallpapers page on guildwars2.com.
+
+    Args:
+        resolution (str): Resolution of Wallpapers you want.
+        save_path (str): Path to save files to.
+        queue (Queue): Queue to add found URLs and paths to.
+        media_url (str): URL for the Media > Wallpapers page. Defaults to the
+            value of MEDIA_URL.
+    """
     _log.debug('Called with: %s', locals())
     found = 0
     with closing(urlopen(media_url)) as p:
@@ -97,17 +149,26 @@ def get_media_urls(resolution, save_path, media_url=MEDIA_URL):
         _log.debug('%s <--> %s', repr(link_text), repr(resolution))
         if link_text == resolution:
             file_path = os.path.join(
-                save_path, 
-                'Media',
-                os.path.basename(urlsplit(file_url)[2])
+                save_path, 'Media', os.path.basename(urlsplit(file_url)[2])
             )
             _log.debug('Adding URL: %s, %s', file_url, file_path)
-            _queue.put((file_url, file_path))
+            queue.put((file_url, file_path))
             found += 1
     _log.info('Found %d wallpapers in Media', found)
 
 
-def get_releases_urls(resolution, save_path, release_url=RELEASES_URL):
+def get_releases_urls(resolution, save_path, queue, release_url=RELEASES_URL):
+    """
+    Finds all of the release page URLs from the Releases page, and spins off
+    a thread to troll them for wallpaper URLs.
+
+    Args:
+        resolution (str): Resolution of Wallpapers you want.
+        save_path (str): Path to save files to.
+        queue (Queue): Queue to add found URLs and paths to.
+        release_url (str): URL to the Releases page. Defaults to the value of
+            RELEASES_URL.
+    """
     _log.debug('Called with: %s', locals())
     with closing(urlopen(release_url)) as p:
         data = cleanup_html(p.read())
@@ -136,18 +197,28 @@ def get_releases_urls(resolution, save_path, release_url=RELEASES_URL):
             for url, _ in links:
                 url = cleanup_url(url)
                 t = Thread(target=get_release_urls, args=(
-                    section_title, 
-                    release_name, 
-                    release_date, 
-                    url, 
-                    resolution,
-                    save_path
+                    section_title, release_name, release_date, url, resolution,
+                    save_path, queue
                 ))
                 t.start()
 
 
 def get_release_urls(section_title, release_name, release_date, url, resolution,
-                     save_path):
+                     save_path, queue):
+    """
+    Thread target method to crawl the HTML of a release page and find
+    wallpaper URLs.
+
+    Args:
+        section_title (str): Title of the section the release was in. Usually
+            a living world season.
+        release_name (str): Name of the release.
+        release_date (str): Release date of the release.
+        url (str): URL of the Release page.
+        resolution (str): Resolution of Wallpapers you want.
+        save_path (str): Path to save files to.
+        queue (Queue): Queue to add found URLs and paths to.
+    """
     _log.debug('Called with: %s', locals())
     found = 0
     try:
@@ -176,7 +247,7 @@ def get_release_urls(section_title, release_name, release_date, url, resolution,
                     )
                 )
                 _log.debug('Adding URL: %s, %s', file_url, file_path)
-                _queue.put((file_url, file_path))
+                queue.put((file_url, file_path))
                 found += 1
         except ValueError:
             continue
@@ -186,11 +257,19 @@ def get_release_urls(section_title, release_name, release_date, url, resolution,
 
 
 # --- Download URLs -----------------------------------------------------------
-def download_image():
+def download_image(queue):
+    """
+    Thread target to download images from the queue. Will loop while there
+    are items in the queue, get the next item in the queue, download the
+    file, and write it to disk.
+
+    Args:
+        queue (Queue): Queue to grab items from.
+    """
     _log.debug('Download thread started.')
     while True:
         try:
-            url, save_path = _queue.get(False)
+            url, save_path = queue.get(False)
             _log.debug('Got: %s --> %s', url, save_path)
             if not os.path.exists(os.path.dirname(save_path)):
                 try:
@@ -212,7 +291,7 @@ def download_image():
                 _log.info('Saved: %s', save_path)
             except (ValueError, OSError) as e:
                 _log.error('ERROR saving %s from %s:\n%s', save_path, url, e)
-            _queue.task_done()
+            queue.task_done()
         except Empty:
             break
     _log.debug('Download thread done.')
@@ -254,19 +333,20 @@ if __name__ == '__main__':
     )
     _log = logging.getLogger('GW2Walls2')
     values.save_path = fix_save_path(values.save_path)
+    queue = Queue()
 
     _log.debug('Processed Args:\n%s\n', '\n'.join(
         ['{:<16}: {}'.format(k, v) for k, v in values.__dict__.items()]
     ))
 
     _log.info('\nGetting URLs...')
-    get_releases_urls(values.resolution, values.save_path)
-    get_media_urls(values.resolution, values.save_path)
+    get_releases_urls(values.resolution, values.save_path, queue)
+    get_media_urls(values.resolution, values.save_path, queue)
     
     _log.info('\nDownloading files...')
     for i in range(values.threads):
-        t = Thread(target=download_image)
+        t = Thread(target=download_image, args=(queue, ))
         t.start()
     
-    _queue.join()
+    queue.join()
     _log.info('Done.')
