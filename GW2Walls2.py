@@ -6,7 +6,11 @@ import sys
 
 from contextlib import closing
 from threading import Thread
-from Queue import Queue, Empty
+
+try:
+    from queue import Queue, Empty
+except ImportError:
+    from Queue import Queue, Empty
 
 try:  # Python 3
     from urllib.request import urlopen
@@ -32,6 +36,7 @@ RELEASE_SECTION_PATTERN = r'<section.*?class=".*?release-canvas.*?>(.*?)</sectio
 _log = logging.getLogger('GW2Walls2')
 _queue = Queue()
 
+
 def fix_save_path(save_path):
     _log.debug('Called with: %s', save_path)
     save_path = os.path.expanduser(save_path)
@@ -39,6 +44,7 @@ def fix_save_path(save_path):
     save_path = os.path.abspath(save_path)
     _log.debug('Returning: %s', save_path)
     return save_path
+
 
 def cleanup_html(html):
     # PATTERNS
@@ -53,6 +59,7 @@ def cleanup_html(html):
     _log.debug('Output length: %d chars', len(html))
     return html
 
+
 def cleanup_title(title_html):
     _log = logging.getLogger('GW2Walls2')
     # PATTERNS
@@ -65,12 +72,14 @@ def cleanup_title(title_html):
     _log.debug('Returning: %s', title_html)
     return title_html
 
+
 def cleanup_url(url):
     if url.startswith('//'):
         url = 'https:{}'.format(url)
     elif url.startswith('/'):
         url = '{}{}'.format(MAIN_SITE_URL, url)
     return url
+
 
 # --- Gather URLs -------------------------------------------------------------
 def get_media_urls(resolution, save_path, media_url=MEDIA_URL):
@@ -93,6 +102,7 @@ def get_media_urls(resolution, save_path, media_url=MEDIA_URL):
             _queue.put((file_url, file_path))
             found += 1
     _log.info('Found %d wallpapers in Media', found)
+
 
 def get_releases_urls(resolution, save_path, release_url=RELEASES_URL):
     _log.debug('Called with: %s', locals())
@@ -121,6 +131,7 @@ def get_releases_urls(resolution, save_path, release_url=RELEASES_URL):
                     save_path
                 ))
                 t.start()
+
 
 def get_release_urls(section_title, release_name, release_date, url, resolution, save_path):
     _log.debug('Called with: %s', locals())
@@ -154,6 +165,7 @@ def get_release_urls(section_title, release_name, release_date, url, resolution,
             continue
     _log.info('Found %d wallpapers in %s %s', found, section_title, release_name)
 
+
 # --- Download URLs -----------------------------------------------------------
 def download_image():
     _log.debug('Download thread started.')
@@ -181,46 +193,39 @@ def download_image():
             break
     _log.debug('Download thread done.')
 
+
 # --- Main --------------------------------------------------------------------
 if __name__ == '__main__':
     # Setup arg parser
     parser = argparse.ArgumentParser(
-        version='1.0',
         description='Find and download GW2 Wallpapers.'
     )
     parser.add_argument(
-        '--verbose',
-        default=False,
-        action='store_true',
+        '--version', action='version', version='1.0'
+    )
+    parser.add_argument(
+        '--verbose', default=False, action='store_true',
         help='Enable verbose output.'
     )
     parser.add_argument(
-        '--threads', '-t',
-        default=1,
-        type=int,
+        '--threads', '-t', default=1, type=int,
         help='Number of threads to use for downloading. Defaults to 1.'
     )
     parser.add_argument(
-        'resolution', 
-        type=str,
-        metavar='RESOLUTION',
+        'resolution', type=str, metavar='RESOLUTION',
         help='Resolution of wallpapers to download.'
     )
     parser.add_argument(
-        'save_path',
-        type=str,
-        metavar='SAVE_PATH',
+        'save_path', type=str, metavar='SAVE_PATH',
         help='Path to save downloaded wallpapers to.'
     )
     values = parser.parse_args()
 
     logging.basicConfig(
-        level=logging.DEBUG
-              if values.verbose
-              else logging.INFO, 
-        format='%(funcName)s:%(lineno)d %(message)s'
-               if values.verbose
-               else '%(message)s',
+        level=logging.DEBUG if values.verbose else logging.INFO,
+        format='[%(threadName)s] %(funcName)s:%(lineno)d %(message)s'
+            if values.verbose
+            else '%(message)s',
         stream=sys.stdout,
     )
     _log = logging.getLogger('GW2Walls2')
