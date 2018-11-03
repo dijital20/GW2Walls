@@ -18,6 +18,7 @@ except ImportError:  # Python 2
     from Queue import Queue, Empty
 
 
+# Constants
 MEDIA_URL = 'https://www.guildwars2.com/en/media/wallpapers/'
 RELEASES_URL = 'https://www.guildwars2.com/en/the-game/releases/'
 MAIN_SITE_URL = 'https://www.guildwars2.com'
@@ -29,9 +30,11 @@ DATETIME_PATTERN = r'<time.*?datetime="([\d\-]*)".*?>'
 RELEASE_SECTION_PATTERN = \
     r'<section.*?class=".*?release-canvas.*?>(.*?)</section>'
 
+# Logger
 _log = logging.getLogger('GW2Walls2')
 
 
+# Functions
 def fix_save_path(save_path):
     """
     Munge the save path, expanding user, environment vars, and returning an
