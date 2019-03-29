@@ -41,7 +41,7 @@ class GW2Walls:
         self.verbose = verbose
         self.get_media_walls()
         self.get_release_walls()
-        if len(self.walls) == 0:
+        if not self.walls:
             raise ValueError('No walls found.')
 
     def get_media_walls(self):
@@ -164,11 +164,8 @@ class GW2Walls:
                     wall_list.append(item)
         return wall_list
 
-    def download_walls(self, save_path, dim,
-                       name=None,
-                       use_info=False,
-                       use_folders=False,
-                       wall_type=None):
+    def download_walls(self, save_path, dim, name=None, use_info=False,
+                       use_folders=False, wall_type=None):
         """
         Downloads wallpapers to save_path that match the resolution given in
         dim. If name is specified, just gets the wallpaper for that release,
@@ -202,8 +199,8 @@ class GW2Walls:
                 try:
                     print('Creating {}'.format(path.dirname(save_file)))
                     mkdir(path.dirname(save_file))
-                except OSError as e:
-                    print(e)
+                except OSError as err:
+                    print(err)
             try:
                 if self.verbose:
                     print('({:>3}/{:>3}) {} <-- {}'.format(
@@ -213,8 +210,8 @@ class GW2Walls:
                                                     path.basename(save_file)))
                 with open(save_file, mode='wb') as f:
                     f.write(urlopen(item['url']).read())
-            except OSError as e:
-                print(e)
+            except OSError as err:
+                print(err)
 
     def walls_to_csv(self, save_file):
         """
