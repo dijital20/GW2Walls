@@ -3,16 +3,11 @@ import csv
 import logging
 import os
 import sys
-
-try:  # Python 3
-    from urllib.request import urlopen
-except ImportError:  # Python 2
-    from urllib2 import urlopen
-
 from string import ascii_letters, digits
 from datetime import datetime
 
 from bs4 import BeautifulSoup
+from requests import get
 
 
 class GW2Walls(object):
@@ -54,7 +49,7 @@ class GW2Walls(object):
         """
         self._log.info('\nGetting media walls\n%s', self.media_url)
 
-        wallpaper_html = urlopen(self.media_url).read()
+        wallpaper_html = get(self.media_url).content
         wallpaper_soup = BeautifulSoup(wallpaper_html, 'html.parser')
 
         for wall_item in wallpaper_soup.find_all('li', 'wallpaper'):
@@ -86,7 +81,7 @@ class GW2Walls(object):
         """
         self._log.info('\nGetting release walls\n%s', self.releases_url)
 
-        releases_html = urlopen(self.releases_url).read()
+        releases_html = get(self.releases_url).content
         releases_soup = BeautifulSoup(releases_html, 'html.parser')
 
         for canvas in releases_soup.find_all('section', 'release-canvas'):
@@ -107,7 +102,7 @@ class GW2Walls(object):
         """
         self._log.info('  Getting release: %s', release_url)
 
-        release_html = urlopen(release_url).read()
+        release_html = get(release_url).content
         release_soup = BeautifulSoup(release_html, 'html.parser')
 
         wall_name = self.__get_filename(release_soup.title.text.replace(' | GuildWars2.com', ''))
@@ -166,7 +161,7 @@ class GW2Walls(object):
         if wall_type and wall_type not in self.types:
             raise ValueError(
                 'Incorrect type specified ({}).\n\nPlease specify one of the following:\n{}'.format(
-                                 wall_type, self.types
+                    wall_type, self.types
                 )
             )
 
@@ -234,7 +229,7 @@ class GW2Walls(object):
                 self._log.debug('%s -> %s', item['url'], save_file)
 
                 with open(save_file, mode='wb') as f:
-                    f.write(urlopen(item['url']).read())
+                    f.write(get(item['url']).content)
 
                 self._log.debug('Wrote %d bytes', os.path.getsize(save_file))
             except OSError as err:
