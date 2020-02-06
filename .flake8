@@ -1,0 +1,30 @@
+[flake8]
+# Set the maximum line length to 120, because we're not savages.
+max-line-length=120
+
+# Set the max cyclonic complexity. This will recommend complex functions that should be broken down.
+max-complexity=16
+
+# Set the import order style to Pycharm's. Use Pycharm's "cleanup imports" to fix these issues.
+import-order-style=pycharm
+
+# Set the docstring style to Google.
+docstring-convention=google
+
+# Ignore checks that we don't care about.
+ignore=
+    D212,  # Don't worry about putting the summary on the same line as the opening quote.
+    D413,  # Don't worry about enforcing a newline on the end of the last section.
+    D415,  # Don't worry about enforcing the docstring ending with punctuation.
+    E501,  # Turn off this line too long in favor of the other one.
+    E722,  # Redundant with B001, bare except
+
+# Exclude files in folders we don't care about.
+exclude=
+    __pycache__,  # Cache
+    build,  # Py2exe
+    dist  # Py2exe
+    __init__.py  # Init py files.
+    .nox  # nox folder
+    .vscode  # VSCode folder
+    .idea  # PyCharm idea folder
