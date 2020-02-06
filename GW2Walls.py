@@ -218,12 +218,7 @@ class GW2Walls(object):
             else:
                 save_file = os.path.join(save_path, item['url'].split('/')[-1])
 
-            if not os.path.exists(os.path.dirname(save_file)):
-                try:
-                    self._log.info('Creating %s', os.path.dirname(save_file))
-                    os.mkdir(os.path.dirname(save_file))
-                except OSError:
-                    self._log.exception('ERROR creating output path.')
+            os.makedirs(os.path.dirname(save_file), exist_ok=True)
 
             try:
                 self._log.info('(%3d/%3d) %s', idx + 1, len(items), os.path.basename(save_file))
@@ -358,7 +353,7 @@ if __name__ == '__main__':
     )
 
     # Do stuff!
-    start_at = time.perf_counter
+    start_at = time.perf_counter()
     app = GW2Walls()
     app.download_walls(
         values.save_path, values.resolution,
@@ -366,5 +361,5 @@ if __name__ == '__main__':
     )
     if values.c:
         app.walls_to_csv(values.c)
-    elapsed = time.perf_counter - start_at
+    elapsed = time.perf_counter() - start_at
     logging.info('Completed in %.2f seconds', elapsed)
