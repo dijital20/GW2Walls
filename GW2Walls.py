@@ -3,6 +3,7 @@ import csv
 import logging
 import os
 import sys
+import time
 from string import ascii_letters, digits
 from datetime import datetime
 
@@ -357,6 +358,7 @@ if __name__ == '__main__':
     )
 
     # Do stuff!
+    start_at = time.perf_counter
     app = GW2Walls()
     app.download_walls(
         values.save_path, values.resolution,
@@ -364,3 +366,5 @@ if __name__ == '__main__':
     )
     if values.c:
         app.walls_to_csv(values.c)
+    elapsed = time.perf_counter - start_at
+    logging.info('Completed in %.2f seconds', elapsed)
