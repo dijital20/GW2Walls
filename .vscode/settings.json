@@ -1,0 +1,15 @@
+{
+    "[python]": {
+        "diffEditor.ignoreTrimWhitespace": false,
+        "editor.defaultFormatter": "charliermarsh.ruff",
+        "editor.formatOnPaste": true,
+        "editor.formatOnSave": true,
+        "editor.formatOnType": true,
+        "editor.wordBasedSuggestions": "off"
+    },
+    "[toml]": {
+        "editor.formatOnPaste": true,
+        "editor.formatOnSave": true
+    },
+    "ruff.organizeImports": true
+}
