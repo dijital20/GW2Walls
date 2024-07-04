@@ -26,6 +26,12 @@ var/
 pip-log.txt
 pip-delete-this-directory.txt
 
+# Virtual Environments
+venv/
+.venv/
+env/
+.env/
+
 # Unit test / coverage reports
 htmlcov/
 .tox/
@@ -51,16 +57,6 @@ coverage.xml
 
 # Sphinx documentation
 docs/_build/
-
-# =========================
-# Pycharm
-# =========================
-.idea
-
-# =========================
-# Visual Studio Code
-# =========================
-.vscode
 
 # =========================
 # Operating System Files
@@ -96,15 +92,3 @@ Desktop.ini
 
 # Recycle Bin used on file shares
 $RECYCLE.BIN/
-
-# Windows Installer files
-*.cab
-*.msi
-*.msm
-*.msp
-
-# Pycharm
-.idea
-
-# Visual Studio Code
-.vscode
