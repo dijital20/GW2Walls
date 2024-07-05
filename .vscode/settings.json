@@ -11,5 +11,6 @@
         "editor.formatOnPaste": true,
         "editor.formatOnSave": true
     },
+    "autoDocstring.docstringFormat": "google-notypes",
     "ruff.organizeImports": true
 }
