@@ -1,7 +1,23 @@
+[project]
+name = "gw2walls"
+version = "1.0.0"
+description = "Download wallpapers from Guild Wars 2"
+readme = "README.md"
+authors = [{ name = "Josh Schneider", email = "josh.schneider@gmail.com" }]
+requires-python = ">=3.14"
+dependencies = ["beautifulsoup4>=4.15.0", "requests>=2.34.2"]
+
+[project.scripts]
+gw2walls = "GW2Walls"
+
+[dependency-groups]
+dev = ["ruff>=0.17.0"]
+
+[tool.ruff]
 line-length = 120
 target-version = "py310"
 
-[lint]
+[tool.ruff.lint]
 select = [
     "C90",  # mccabe
     "I",    # iSort
@@ -30,5 +46,5 @@ select = [
     "RUF",  # ruff
 ]
 
-[lint.pydocstyle]
+[tool.ruff.lint.pydocstyle]
 convention = "google"
